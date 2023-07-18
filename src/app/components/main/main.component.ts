@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { Map, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
-import { ReplaySubject, Observable, Subject, takeUntil } from 'rxjs';
+import { ReplaySubject, Observable, Subject } from 'rxjs';
 import OSM from 'ol/source/OSM';
 
 @Component({
@@ -9,17 +9,21 @@ import OSM from 'ol/source/OSM';
     templateUrl: './main.component.html',
     styleUrls: ['./main.component.scss']
 })
-export class MainComponent implements OnInit, OnDestroy {
+export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
     public _map$ = new ReplaySubject<Map>(1);
 
     private destroy$ = new Subject<void>();
 
 	public ngOnInit(): void {
-		this.createMap();
+		
 	}
 
     public ngOnDestroy(): void {
         this.destroy$.next();
+    }
+
+    public ngAfterViewInit(): void {
+        this.createMap();
     }
 
     public createMap(): void {
@@ -37,12 +41,6 @@ export class MainComponent implements OnInit, OnDestroy {
         });
         
         this._map$.next(map);
-    }
-
-    public setMapContainer(): void {
-        this.map$
-        .pipe(takeUntil(this.destroy$))
-        // .subscribe(map => )
     }
 
     public get map$(): Observable<Map> {
