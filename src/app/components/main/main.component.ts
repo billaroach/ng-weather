@@ -9,7 +9,7 @@ import { toLonLat } from 'ol/proj';
 @Component({
     selector: 'app-main',
     templateUrl: './main.component.html',
-    styleUrls: ['./main.component.scss']
+    styleUrls: ['./main.component.scss'],
 })
 export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
     public _map$ = new ReplaySubject<Map>(1);
@@ -18,9 +18,9 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private destroy$ = new Subject<void>();
 
-	public ngOnInit(): void {
-		this.getMapClicks();
-	}
+    public ngOnInit(): void {
+        this.getMapClicks();
+    }
 
     public ngOnDestroy(): void {
         this.destroy$.next();
@@ -39,12 +39,13 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
             layers: [
                 new TileLayer({
                     source: new OSM(),
-                })
+                }),
             ],
             target: 'ol-map',
         });
-        
+
         this._map$.next(map);
+        console.log(map.getLayers());
     }
 
     public get map$(): Observable<Map> {
@@ -54,24 +55,28 @@ export class MainComponent implements OnInit, OnDestroy, AfterViewInit {
     public getMapClicks(): void {
         this.map$
             .pipe(
-                switchMap(olMap => new Observable<Coordinate>(subscriber => {
-                    this.mapClicksListener = (event) => {
-                        subscriber.next(toLonLat(event.coordinate));
-                    };
-                    olMap.on('singleclick', this.mapClicksListener);
-                    return { unsubscribe: () => this.stopGetMapClicks() }
-                })),
+                switchMap(
+                    (olMap) =>
+                        new Observable<Coordinate>((subscriber) => {
+                            this.mapClicksListener = (event) => {
+                                subscriber.next(toLonLat(event.coordinate));
+                            };
+                            olMap.on('singleclick', this.mapClicksListener);
+                            return {
+                                unsubscribe: () => this.stopGetMapClicks(),
+                            };
+                        }),
+                ),
                 takeUntil(this.destroy$),
             )
-            .subscribe(coordinate => console.log(coordinate));
+            .subscribe((coordinate) => console.log(coordinate));
     }
 
     public stopGetMapClicks(): void {
-        this.map$
-            .subscribe(olMap => {
-                if (!this.mapClicksListener) return;
-                olMap.un('singleclick', this.mapClicksListener);
-                this.mapClicksListener = undefined;
-            });
+        this.map$.subscribe((olMap) => {
+            if (!this.mapClicksListener) return;
+            olMap.un('singleclick', this.mapClicksListener);
+            this.mapClicksListener = undefined;
+        });
     }
 }
